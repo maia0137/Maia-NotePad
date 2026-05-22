@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bloco de Notas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --c-bg-light: #ffffff; --c-text-light: #1f1f1f; --c-border-light: #e5e5e5; --c-accent-light: #0074e0; --c-secondary-light: #f9f9f9; --c-hover-light: #f0f0f0; --c-active-light: #e0e0e0;
+            --c-bg-dark: #1a1a1a; --c-text-dark: #f0f0f0; --c-border-dark: #444444; --c-accent-dark: #60cdff; --c-secondary-dark: #2a2a2a; --c-hover-dark: #3a3a3a; --c-active-dark: #404040;
+            --c-bg-sepia: #f4f0e8; --c-text-sepia: #4a3b2f; --c-border-sepia: #d0c8b8; --c-accent-sepia: #6e5847; --c-secondary-sepia: #e9e4d9; --c-hover-sepia: #d8d2c6; --c-active-sepia: #c8c0b3;
+            
+            --f-sans-serif: 'Segoe UI', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            --f-serif: Georgia, 'Times New Roman', serif;
+            --f-mono: 'Cascadia Mono', 'Consolas', 'Roboto Mono', 'Courier New', monospace;
+            --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        html { height: 100%; }
+        body {
+            background: var(--bg-primary); color: var(--text-primary);
+            font-family: var(--font-editor);
+            height: 100dvh; min-height: 100%;
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        body.theme-light { --bg-primary: var(--c-bg-light); --text-primary: var(--c-text-light); --border: var(--c-border-light); --accent: var(--c-accent-light); --bg-secondary: var(--c-secondary-light); --hover: var(--c-hover-light); --active: var(--c-active-light); }
+        body.theme-dark  { --bg-primary: var(--c-bg-dark);  --text-primary: var(--c-text-dark);  --border: var(--c-border-dark);  --accent: var(--c-accent-dark);  --bg-secondary: var(--c-secondary-dark);  --hover: var(--c-hover-dark);  --active: var(--c-active-dark);  }
+        body.theme-sepia { --bg-primary: var(--c-bg-sepia); --text-primary: var(--c-text-sepia); --border: var(--c-border-sepia); --accent: var(--c-accent-sepia); --bg-secondary: var(--c-secondary-sepia); --hover: var(--c-hover-sepia); --active: var(--c-active-sepia); }
+
+        body.font-sans-serif { --font-editor: var(--f-sans-serif); }
+        body.font-serif      { --font-editor: var(--f-serif); }
+        body.font-mono       { --font-editor: var(--f-mono); }
+        
+        .header { background: var(--bg-secondary); border-bottom: 1px solid var(--border); box-shadow: var(--shadow); z-index: 10; }
+        .title-bar { display: flex; align-items: center; padding: 4px 16px; gap: 8px; }
+        .app-icon { width: 18px; height: 18px; }
+        .app-title { font-size: 12px; font-weight: 400; flex: 1; font-family: 'Segoe UI', 'Roboto', sans-serif; }
+        .menu-bar {
+            display: flex;
+            padding: 0 8px;
+            height: 40px;
+            align-items: center;
+            gap: 4px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .menu-item {
+            padding: 4px 8px;
+            font-size: 18px;
+            line-height: 1;
+            color: var(--text-primary);
+            background: none;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.1s;
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            touch-action: manipulation;
+            white-space: nowrap;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 36px;
+            height: 36px;
+        }
+        .menu-item:active { background: var(--active); }
+        .theme-icon-btn {
+            font-size: 20px;
+        }
+
+        .tabs-bar {
+            background: var(--bg-secondary);
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+            padding: 2px 4px;
+            gap: 1px;
+            min-height: 32px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .tab {
+            display: flex;
+            align-items: center;
+            padding: 2px 8px;
+            font-size: 11px;
+            border-radius: 4px;
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            transition: background 0.1s;
+            min-width: 80px;
+            flex-shrink: 0;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .tab.active {
+            background: var(--bg-primary);
+            border-color: var(--border);
+        }
+        .tab:hover { background: var(--hover); }
+        .tab-close {
+            margin-left: 4px;
+            font-size: 14px;
+            line-height: 1;
+            opacity: 0.5;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .tab-close:hover { opacity: 1; }
+        .new-tab-btn {
+            padding: 2px 8px;
+            font-size: 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--accent);
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .editor-container { overflow: auto; -webkit-overflow-scrolling: touch; }
+        #editor {
+            width: 100%; height: 100%; padding: 16px 20px;
+            background: var(--bg-primary); border: none; outline: none;
+            color: var(--text-primary); font-size: 14px; line-height: 1.6;
+            resize: none; font-family: inherit; font-weight: 400;
+        }
+        #editor::placeholder { color: var(--placeholder-color); opacity: 1; }
+        body.theme-light { --placeholder-color: #6b6b6b; }
+        body.theme-dark  { --placeholder-color: #bbbbbb; }
+        body.theme-sepia { --placeholder-color: #8b7b6b; }
+        
+        .status-bar {
+            background: var(--bg-secondary); border-top: 1px solid var(--border);
+            padding: 4px 16px; display: flex; align-items: center;
+            flex-wrap: wrap; gap: 8px 12px;
+            font-size: 11px; color: var(--text-primary);
+            min-height: 26px;
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+        }
+        .stat-item strong { margin-right: 3px; font-weight: 600; }
+
+        .save-popup { position: fixed; top: 80px; right: 20px; background: var(--bg-secondary); padding: 8px 14px; border-radius: 6px; font-size: 12px; color: var(--text-primary); opacity: 0; transform: translateY(-10px); transition: all 0.2s; pointer-events: none; box-shadow: var(--shadow); border: 1px solid var(--border); z-index: 2000; }
+        .save-popup.show { opacity: 1; transform: translateY(0); }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 1000; }
+        .modal-overlay.show { opacity: 1; pointer-events: auto; }
+        .modal { background: var(--bg-primary); border-radius: 8px; padding: 20px; min-width: 280px; max-width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,0.2); transform: scale(0.95); transition: transform 0.2s; color: var(--text-primary); }
+        .modal-overlay.show .modal { transform: scale(1); }
+        .modal h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+        .modal-buttons { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+        .btn { padding: 5px 16px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; transition: all 0.1s; font-family: 'Segoe UI', 'Roboto', sans-serif; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-secondary { background: var(--hover); color: var(--text-primary); }
+        .btn:active { opacity: 0.8; }
+        body.theme-dark .menu-item:hover { background: var(--hover); }
+        body.theme-dark .btn-secondary { background: #3a3a3a; color: #f0f0f0; }
+    </style>
+</head>
+<body class="theme-light font-mono">
+    <div class="header">
+        <div class="title-bar">
+            <svg class="app-icon" viewBox="0 0 24 24" fill="var(--accent)"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>
+            <span class="app-title">Bloco de Notas</span>
+        </div>
+        <div class="menu-bar">
+            <button id="btn-open" class="menu-item" title="Abrir arquivo" aria-label="Abrir arquivo">📂</button>
+            <button id="btn-save" class="menu-item" title="Salvar" aria-label="Salvar">💾</button>
+            <button id="btn-save-as" class="menu-item" title="Salvar como…" aria-label="Salvar como…">📥</button>
+            <button id="btn-copy" class="menu-item" title="Copiar tudo" aria-label="Copiar">📋</button>
+            <button id="btn-font" class="menu-item" title="Alternar fonte" aria-label="Fontes">🔤</button>
+            <button id="btn-undo" class="menu-item" title="Desfazer (Ctrl+Z)" aria-label="Desfazer">↩️</button>
+            <button id="btn-redo" class="menu-item" title="Refazer (Ctrl+Y)" aria-label="Refazer">↪️</button>
+            <button id="btn-theme" class="menu-item theme-icon-btn" title="Alternar tema" aria-label="Tema">☀️</button>
+        </div>
+    </div>
+    
+    <div class="tabs-bar" id="tabsBar"></div>
+    
+    <input type="file" id="fileInput" accept=".txt,.md,.text,text/plain,text/markdown" style="display: none;">
+    
+    <div class="editor-container">
+        <textarea id="editor" placeholder="Digite algo..." autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
+    </div>
+    
+    <div class="status-bar">
+        <span id="lineInfo">Ln 1, Col 1</span>
+        <span class="stat-item"><strong id="word-count">0</strong> Palavras</span>
+        <span class="stat-item"><strong id="letter-count">0</strong> Letras</span>
+        <span class="stat-item"><strong id="space-count">0</strong> Espaços</span>
+        <span class="stat-item"><strong id="paragraph-count">0</strong> Parágrafos</span>
+        <span class="stat-item">⏱️ <strong id="reading-time">0 min</strong></span>
+    </div>
+    
+    <div class="save-popup" id="savePopup">✓ Pronto!</div>
+
+    <div class="modal-overlay" id="modalContent">
+        <div class="modal">
+            <h3>Download não suportado</h3>
+            <p style="font-size:13px; margin-bottom:12px;">Copie o texto abaixo manualmente:</p>
+            <textarea readonly id="modalTextarea" style="width:100%; height:150px; font-family: monospace; font-size:12px; resize: vertical;"></textarea>
+            <div class="modal-buttons" style="margin-top:10px;">
+                <button class="btn btn-primary" id="btn-copy-modal">Copiar texto</button>
+                <button class="btn btn-secondary" id="btn-close-modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    (function() {
+        const editor = document.getElementById('editor');
+        const savePopup = document.getElementById('savePopup');
+        const tabsBar = document.getElementById('tabsBar');
+        const fileInput = document.getElementById('fileInput');
+        const lineInfo = document.getElementById('lineInfo');
+        const body = document.body;
+        const modalContent = document.getElementById('modalContent');
+        const modalTextarea = document.getElementById('modalTextarea');
+        const btnTheme = document.getElementById('btn-theme');
+        const WORDS_PER_MINUTE = 200;
+        
+        const statsElements = {
+            word: document.getElementById('word-count'),
+            letter: document.getElementById('letter-count'),
+            space: document.getElementById('space-count'),
+            paragraph: document.getElementById('paragraph-count'),
+            readingTime: document.getElementById('reading-time')
+        };
+
+        let documents = [];
+        let activeDocId = null;
+        let themeIndex = 0;
+        let fontIndex = 0;
+        const themes = ['theme-light', 'theme-dark', 'theme-sepia'];
+        const fonts = ['font-mono', 'font-sans-serif', 'font-serif'];
+        const themeIcons = { 'theme-light': '☀️', 'theme-dark': '🌙', 'theme-sepia': '📜' };
+
+        // Função auxiliar para extrair título automático da primeira linha
+        function getAutoTitle(content) {
+            const lines = content.split('\n');
+            const firstNonEmpty = lines.find(line => line.trim() !== '');
+            if (!firstNonEmpty) return 'Sem título';
+            // Limita a 30 caracteres e adiciona "..." se cortado
+            return firstNonEmpty.trim().substring(0, 30) + (firstNonEmpty.trim().length > 30 ? '…' : '');
+        }
+
+        // Atualiza o título da aba ativa baseado no conteúdo
+        function updateActiveTabTitle() {
+            const activeDoc = documents.find(d => d.id === activeDocId);
+            if (!activeDoc) return;
+            // Se o documento tem um nome personalizado (definido manualmente e não automático), mantém
+            // Vamos usar uma flag _autoTitle para saber se o título é automático
+            if (activeDoc._autoTitle !== false) {
+                const newTitle = getAutoTitle(editor.value);
+                if (activeDoc.title !== newTitle) {
+                    activeDoc.title = newTitle;
+                    updateTabs();
+                    saveDocsToStorage();
+                }
+            }
+        }
+
+        function saveDocsToStorage() {
+            const activeDoc = documents.find(d => d.id === activeDocId);
+            if (activeDoc) activeDoc.content = editor.value;
+            const toStore = documents.map(d => ({ id: d.id, title: d.title, content: d.content, _autoTitle: d._autoTitle }));
+            localStorage.setItem('notepad_docs', JSON.stringify(toStore));
+            localStorage.setItem('notepad_activeId', activeDocId);
+        }
+
+        function loadDocsFromStorage() {
+            try {
+                const stored = localStorage.getItem('notepad_docs');
+                if (stored) {
+                    documents = JSON.parse(stored);
+                    documents.forEach(d => {
+                        d.id = String(d.id);
+                        // Se _autoTitle não estiver definido, assume true para manter compatibilidade
+                        if (d._autoTitle === undefined) d._autoTitle = true;
+                    });
+                    const activeId = localStorage.getItem('notepad_activeId');
+                    if (activeId && documents.some(d => d.id === activeId)) {
+                        activeDocId = activeId;
+                    } else if (documents.length > 0) {
+                        activeDocId = documents[0].id;
+                    }
+                }
+            } catch(e) {}
+            if (!documents.length) {
+                const newDoc = { id: Date.now().toString(), title: 'Sem título', content: '', _autoTitle: true };
+                documents.push(newDoc);
+                activeDocId = newDoc.id;
+            }
+        }
+
+        function switchToDoc(docId) {
+            const currentDoc = documents.find(d => d.id === activeDocId);
+            if (currentDoc) {
+                currentDoc.content = editor.value;
+                // Ao trocar de aba, atualiza o título da aba anterior
+                if (currentDoc._autoTitle !== false) {
+                    currentDoc.title = getAutoTitle(editor.value);
+                }
+            }
+            activeDocId = docId;
+            const doc = documents.find(d => d.id === docId);
+            if (doc) {
+                editor.value = doc.content;
+                updateAllStats();
+                updateTabs();
+                editor.focus();
+                saveDocsToStorage();
+            }
+        }
+
+        function addNewTab(title = null, content = '', autoTitle = true) {
+            // Se title for null, usa automático; senão usa o fornecido e desativa autoTitle
+            const docTitle = title || getAutoTitle(content);
+            const newDoc = {
+                id: Date.now().toString(),
+                title: docTitle,
+                content: content,
+                handle: null,
+                _autoTitle: title ? false : autoTitle // se título foi fornecido, não é automático
+            };
+            documents.push(newDoc);
+            activeDocId = newDoc.id;
+            editor.value = content;
+            updateAllStats();
+            updateTabs();
+            saveDocsToStorage();
+            editor.focus();
+        }
+
+        function closeTab(docId, e) {
+            e.stopPropagation();
+            if (documents.length <= 1) {
+                const doc = documents[0];
+                doc.content = '';
+                doc.title = 'Sem título';
+                doc._autoTitle = true;
+                editor.value = '';
+                updateAllStats();
+                updateTabs();
+                saveDocsToStorage();
+                return;
+            }
+            documents = documents.filter(d => d.id !== docId);
+            if (activeDocId === docId) {
+                activeDocId = documents[0].id;
+                editor.value = documents[0].content;
+            }
+            updateAllStats();
+            updateTabs();
+            saveDocsToStorage();
+        }
+
+        function renameTab(docId) {
+            const doc = documents.find(d => d.id === docId);
+            if (!doc) return;
+            const newTitle = prompt('Renomear:', doc.title);
+            if (newTitle !== null && newTitle.trim() !== '') {
+                doc.title = newTitle.trim();
+                doc._autoTitle = false; // agora é manual, não será sobrescrito
+                updateTabs();
+                saveDocsToStorage();
+            }
+        }
+
+        function updateTabs() {
+            tabsBar.innerHTML = '';
+            documents.forEach(doc => {
+                const tab = document.createElement('div');
+                tab.className = 'tab' + (doc.id === activeDocId ? ' active' : '');
+                tab.innerHTML = `<span style="overflow:hidden; text-overflow:ellipsis;">${escapeHtml(doc.title)}</span><span class="tab-close">&times;</span>`;
+                tab.querySelector('span:first-child').addEventListener('click', () => switchToDoc(doc.id));
+                tab.querySelector('span:first-child').addEventListener('dblclick', () => renameTab(doc.id));
+                tab.querySelector('.tab-close').addEventListener('click', (e) => closeTab(doc.id, e));
+                tabsBar.appendChild(tab);
+            });
+            const newBtn = document.createElement('button');
+            newBtn.className = 'new-tab-btn';
+            newBtn.textContent = '+';
+            newBtn.addEventListener('click', () => addNewTab());
+            tabsBar.appendChild(newBtn);
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function updateThemeButtonIcon() {
+            btnTheme.textContent = themeIcons[themes[themeIndex]];
+        }
+
+        async function saveDocument(saveAs = false) {
+            const activeDoc = documents.find(d => d.id === activeDocId);
+            if (!activeDoc) return;
+            activeDoc.content = editor.value;
+            const filenameBase = activeDoc.title.replace(/[\\/:*?"<>|]/g, '_') || 'nota';
+            
+            if (window.showSaveFilePicker && (saveAs || !activeDoc.handle)) {
+                try {
+                    const ext = filenameBase.endsWith('.md') ? '.md' : '.txt';
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: filenameBase + (filenameBase.endsWith('.md') ? '' : '.txt'),
+                        types: [{ description: 'Text files', accept: { 'text/plain': ['.txt'], 'text/markdown': ['.md'] } }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(activeDoc.content);
+                    await writable.close();
+                    activeDoc.handle = handle;
+                    showPopup('✓ Arquivo salvo');
+                    return;
+                } catch(e) {
+                    if (e.name !== 'AbortError') showPopup('Erro ao salvar');
+                    return;
+                }
+            }
+            
+            try {
+                const blob = new Blob([activeDoc.content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filenameBase + (filenameBase.endsWith('.md') ? '' : '.txt');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                showPopup('✓ Download iniciado');
+            } catch(e) {
+                modalTextarea.value = activeDoc.content;
+                modalContent.classList.add('show');
+            }
+        }
+
+        function copyToClipboard(text) {
+            try {
+                navigator.clipboard.writeText(text).then(() => showPopup('✓ Copiado'))
+                .catch(() => {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.position = 'fixed'; ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    showPopup('✓ Copiado (fallback)');
+                });
+            } catch(e) {
+                showPopup('⚠️ Erro ao copiar');
+            }
+        }
+
+        function openFile() {
+            fileInput.click();
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                // Ao abrir arquivo, título é o nome do arquivo, não automático
+                addNewTab(file.name, ev.target.result, false);
+                showPopup('✓ Arquivo aberto');
+            };
+            reader.onerror = () => showPopup('Erro ao ler arquivo');
+            reader.readAsText(file);
+            fileInput.value = '';
+        });
+
+        function updateAllStats() {
+            const text = editor.value;
+            const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+            const letters = text.replace(/\s/g, '').length;
+            const spaces = (text.match(/ /g) || []).length;
+            const paragraphs = text.split(/\n+/).filter(p => p.trim().length > 0).length;
+            statsElements.word.textContent = words;
+            statsElements.letter.textContent = letters;
+            statsElements.space.textContent = spaces;
+            statsElements.paragraph.textContent = paragraphs;
+            const minutes = Math.ceil(words / WORDS_PER_MINUTE);
+            statsElements.readingTime.textContent = minutes === 0 ? '0 min' : (minutes === 1 ? '1 min' : minutes + ' min');
+            
+            const textToCursor = text.substring(0, editor.selectionStart);
+            const lines = textToCursor.split('\n');
+            const currentLine = lines.length;
+            const currentColumn = lines[lines.length - 1].length + 1;
+            lineInfo.textContent = `Ln ${currentLine}, Col ${currentColumn}`;
+            
+            // Atualiza título da aba ativa automaticamente
+            updateActiveTabTitle();
+        }
+
+        function showPopup(msg) {
+            savePopup.textContent = msg;
+            savePopup.classList.add('show');
+            setTimeout(() => savePopup.classList.remove('show'), 2000);
+        }
+
+        // Desfazer / Refazer
+        document.getElementById('btn-undo').addEventListener('click', () => {
+            editor.focus();
+            document.execCommand('undo');
+            updateAllStats();
+            saveDocsToStorage();
+        });
+        document.getElementById('btn-redo').addEventListener('click', () => {
+            editor.focus();
+            document.execCommand('redo');
+            updateAllStats();
+            saveDocsToStorage();
+        });
+
+        // Eventos do editor
+        editor.addEventListener('input', () => { updateAllStats(); saveDocsToStorage(); });
+        editor.addEventListener('select', updateAllStats);
+        editor.addEventListener('click', updateAllStats);
+        editor.addEventListener('keyup', updateAllStats);
+        editor.addEventListener('focus', updateAllStats);
+
+        // Botões principais
+        document.getElementById('btn-save').addEventListener('click', () => saveDocument(false));
+        document.getElementById('btn-save-as').addEventListener('click', () => saveDocument(true));
+        document.getElementById('btn-copy').addEventListener('click', () => {
+            if (editor.value) copyToClipboard(editor.value);
+            else showPopup('Nada para copiar');
+        });
+        document.getElementById('btn-open').addEventListener('click', openFile);
+        document.getElementById('btn-font').addEventListener('click', () => {
+            fontIndex = (fontIndex + 1) % fonts.length;
+            body.classList.remove(...fonts);
+            body.classList.add(fonts[fontIndex]);
+            localStorage.setItem('notepadFont', fonts[fontIndex]);
+            const fontName = fonts[fontIndex].split('-')[1];
+            showPopup(`Fonte: ${fontName.charAt(0).toUpperCase() + fontName.slice(1)}`);
+        });
+        btnTheme.addEventListener('click', () => {
+            themeIndex = (themeIndex + 1) % themes.length;
+            body.classList.remove(...themes);
+            body.classList.add(themes[themeIndex]);
+            localStorage.setItem('notepadTheme', themes[themeIndex]);
+            updateThemeButtonIcon();
+            showPopup(`Tema: ${themes[themeIndex].split('-')[1]}`);
+        });
+
+        // Modal de conteúdo (fallback)
+        document.getElementById('btn-copy-modal').addEventListener('click', () => {
+            copyToClipboard(modalTextarea.value);
+            modalContent.classList.remove('show');
+        });
+        document.getElementById('btn-close-modal').addEventListener('click', () => {
+            modalContent.classList.remove('show');
+        });
+
+        // Inicialização
+        function init() {
+            const savedTheme = localStorage.getItem('notepadTheme') || themes[0];
+            themeIndex = themes.indexOf(savedTheme);
+            body.classList.add(savedTheme);
+            updateThemeButtonIcon();
+            const savedFont = localStorage.getItem('notepadFont') || fonts[0];
+            fontIndex = fonts.indexOf(savedFont);
+            body.classList.add(savedFont);
+            
+            loadDocsFromStorage();
+            updateTabs();
+            const activeDoc = documents.find(d => d.id === activeDocId);
+            if (activeDoc) {
+                editor.value = activeDoc.content;
+                // Garante que o título esteja sincronizado se for automático
+                if (activeDoc._autoTitle !== false) {
+                    activeDoc.title = getAutoTitle(activeDoc.content);
+                    updateTabs();
+                }
+            }
+            updateAllStats();
+            editor.focus();
+        }
+        init();
+    })();
+    </script>
+</body>
+</html>
